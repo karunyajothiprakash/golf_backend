@@ -2,38 +2,41 @@
 
 const express = require("express");
 const cors = require("cors");
-const mysql = require("mysql2");
-require("dotenv").config();
 
+require("dotenv").config();
+import mysql from "mysql2/promise";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ================= Middleware =================
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"],
   })
 );
 
 app.use(express.json());
 
-// ================= MySQL Config (Workbench) =================
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,     // localhost
-  port: process.env.DB_PORT,     // 3306
-  user: process.env.DB_USER,     // root
+// ================= MySQL Config (Aiven) =================
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
-// ================= Connect to MySQL =================
-db.connect((err) => {
+db.getConnection((err, connection) => {
   if (err) {
-    console.error("❌ MySQL Connection Failed:", err.message);
-    return;
+    console.error("❌ MySQL connection failed:", err);
+  } else {
+    console.log("✅ MySQL connected (Aiven)");
+    connection.release();
   }
-  console.log("✅ MySQL Connected (Workbench)");
 });
 
 // ================= POST API — Insert User =================
@@ -76,10 +79,10 @@ app.get("/users", (req, res) => {
 
 // ================= Root =================
 app.get("/", (req, res) => {
-  res.send("🚀 Backend running with MySQL Workbench");
+  res.send("🚀 Backend running with Aiven MySQL");
 });
 
 // ================= Start Server =================
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
