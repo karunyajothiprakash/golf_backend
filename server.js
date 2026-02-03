@@ -1,10 +1,9 @@
-// server.js
-
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
+const fs = require("fs");
 require("dotenv").config();
-import mysql from "mysql2/promise";
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -18,28 +17,30 @@ app.use(
 
 app.use(express.json());
 
-// ================= MySQL Config (Aiven) =================
+// ================= MySQL Config (Aiven + CA SSL) =================
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+  port: Number(process.env.DB_PORT),
+
   ssl: {
-    rejectUnauthorized: false,
+    ca: fs.readFileSync("/etc/secrets/ca.pem"),
   },
 });
 
+// Test DB connection
 db.getConnection((err, connection) => {
   if (err) {
-    console.error("❌ MySQL connection failed:", err);
+    console.error("❌ MySQL connection failed:", err.message);
   } else {
     console.log("✅ MySQL connected (Aiven)");
     connection.release();
   }
 });
 
-// ================= POST API — Insert User =================
+// ================= POST API =================
 app.post("/users", (req, res) => {
   const { name, location, email, phone } = req.body;
 
@@ -63,11 +64,9 @@ app.post("/users", (req, res) => {
   });
 });
 
-// ================= GET API — Fetch Users =================
+// ================= GET API =================
 app.get("/users", (req, res) => {
-  const sql = "SELECT * FROM users";
-
-  db.query(sql, (err, results) => {
+  db.query("SELECT * FROM users", (err, results) => {
     if (err) {
       console.error("❌ Fetch Error:", err.message);
       return res.status(500).json({ message: "Database error" });
