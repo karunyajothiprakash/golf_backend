@@ -99,6 +99,9 @@ app.get("/", (req, res) => {
   res.send("🚀 Backend running with Aiven MySQL");
 });
 
+console.log("👉 DB NAME FROM ENV:", process.env.DB_NAME);
+
+
 // ================= Start Server =================
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
