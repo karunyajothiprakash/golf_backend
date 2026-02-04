@@ -64,7 +64,7 @@ app.post("/users", async (req, res) => {
       id: result.insertId,
     });
   } catch (err) {
-    console.error("❌ Insert Error:", err.message);
+    console.error("Insert Error:", err.message);
     res.status(500).json({
       message: "Database error",
     });
@@ -79,18 +79,42 @@ app.get("/users", async (req, res) => {
 
     res.status(200).json(rows);
   } catch (err) {
-    console.error("❌ Fetch Error:", err.message);
+    console.error(" Fetch Error:", err.message);
     res.status(500).json({
       message: "Database error",
     });
   }
 });
 
+// ================= GET API — Fetch User By ID =================
+app.get("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const sql = "SELECT * FROM users WHERE id = ?";
+    const [rows] = await db.execute(sql, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(" Fetch By ID Error:", err.message);
+    res.status(500).json({
+      message: "Database error",
+    });
+  }
+});
+
+
 // ================= Health Check =================
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
-    message: "Backend is healthy 🚀",
+    message: "Backend is healthy ",
   });
 });
 
@@ -104,5 +128,5 @@ console.log("👉 DB NAME FROM ENV:", process.env.DB_NAME);
 
 // ================= Start Server =================
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
 });
